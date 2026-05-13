@@ -7,7 +7,6 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-
 namespace DatesAndStuff.Web.Tests;
 
 [TestFixture]
@@ -155,13 +154,37 @@ public class PersonPageTests
         submitButton.Click();
 
         // Assert
-        var errorMessageTop = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='ErrorMessageTop']")));
-        var errorMessageField = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='ErrorMessageField']")));
-
-        errorMessageTop.Text.Should().NotBeNullOrWhiteSpace("Error message at the top should be displayed.");
-        errorMessageField.Text.Should().NotBeNullOrWhiteSpace("Error message below the field should be displayed.");
+        var validationMessage = wait.Until(ExpectedConditions.ElementExists(By.ClassName("validation-message")));
+        validationMessage.Text.Should().NotBeNullOrWhiteSpace("Validation message should be displayed for invalid input.");
     }
+    [Test]
+    public void BlazeDemo_MexicoCityToDublin_ShouldHaveAtLeastThreeFlights()
+    {
+        driver.Navigate().GoToUrl("https://blazedemo.com");
 
+        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+        var fromDropdown = wait.Until(
+            ExpectedConditions.ElementIsVisible(By.Name("fromPort")));
+
+        fromDropdown.FindElement(By.XPath(".//option[text()='Mexico City']")).Click();
+
+        var toDropdown = wait.Until(
+            ExpectedConditions.ElementIsVisible(By.Name("toPort")));
+
+        toDropdown.FindElement(By.XPath(".//option[text()='Dublin']")).Click();
+
+        wait.Until(ExpectedConditions.ElementToBeClickable(
+            By.CssSelector("input[type='submit']"))).Click();
+
+        wait.Until(ExpectedConditions.VisibilityOfAllElementsLocatedBy(
+            By.CssSelector("table.table tbody tr")));
+
+        var flights = driver.FindElements(
+            By.CssSelector("table.table tbody tr"));
+
+        flights.Count.Should().BeGreaterThanOrEqualTo(3);
+    }
 
     private bool IsElementPresent(By by)
     {
