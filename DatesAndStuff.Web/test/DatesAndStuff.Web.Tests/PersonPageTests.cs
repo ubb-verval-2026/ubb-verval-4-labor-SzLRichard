@@ -137,6 +137,32 @@ public class PersonPageTests
         salaryAfterSubmission.Should().BeApproximately(expectedSalary, 0.001);
     }
 
+    [Test]
+    public void Person_SalaryIncrease_ShouldShowErrorMessages_ForNegativePercentage()
+    {
+        // Arrange
+        driver.Navigate().GoToUrl(BaseURL);
+        driver.FindElement(By.XPath("//*[@data-test='PersonPageNavigation']")).Click();
+
+        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+
+        var input = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreasePercentageInput']")));
+        input.Clear();
+        input.SendKeys("-15");
+
+        // Act
+        var submitButton = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']")));
+        submitButton.Click();
+
+        // Assert
+        var errorMessageTop = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='ErrorMessageTop']")));
+        var errorMessageField = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='ErrorMessageField']")));
+
+        errorMessageTop.Text.Should().NotBeNullOrWhiteSpace("Error message at the top should be displayed.");
+        errorMessageField.Text.Should().NotBeNullOrWhiteSpace("Error message below the field should be displayed.");
+    }
+
+
     private bool IsElementPresent(By by)
     {
         try
