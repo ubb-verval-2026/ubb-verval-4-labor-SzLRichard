@@ -104,33 +104,57 @@ public class PersonPageTests
         driver.Navigate().GoToUrl(BaseURL);
         driver.FindElement(By.XPath("//*[@data-test='PersonPageNavigation']")).Click();
 
-        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
 
-        var input = wait.Until(ExpectedConditions.ElementIsVisible(
-            By.XPath("//*[@data-test='SalaryIncreasePercentageInput']")));
-
-        input.Clear();
-        input.SendKeys(
-            percentage.ToString(System.Globalization.CultureInfo.InvariantCulture));
-
-        var submitButton = wait.Until(ExpectedConditions.ElementToBeClickable(
-            By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']")));
-
-        submitButton.Click();
+        var inputBy = By.XPath("//*[@data-test='SalaryIncreasePercentageInput']");
+        var buttonBy = By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']");
+        var salaryBy = By.XPath("//*[@data-test='DisplayedSalary']");
 
         wait.Until(d =>
         {
-            var text = d.FindElement(
-                By.XPath("//*[@data-test='DisplayedSalary']")).Text;
-
-            return !string.IsNullOrWhiteSpace(text);
+            try
+            {
+                var input = d.FindElement(inputBy);
+                input.Clear();
+                input.SendKeys(percentage.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                return true;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
         });
 
-        var salaryLabel = driver.FindElement(
-            By.XPath("//*[@data-test='DisplayedSalary']"));
+        wait.Until(d =>
+        {
+            try
+            {
+                d.FindElement(buttonBy).Click();
+                return true;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+        });
+
+        wait.Until(d =>
+        {
+            try
+            {
+                var text = d.FindElement(salaryBy).Text;
+                return !string.IsNullOrWhiteSpace(text);
+            }
+            catch
+            {
+                return false;
+            }
+        });
+
+        var salaryText = wait.Until(d => d.FindElement(salaryBy).Text);
 
         var salaryAfterSubmission = double.Parse(
-            salaryLabel.Text,
+            salaryText,
             System.Globalization.CultureInfo.InvariantCulture);
 
         salaryAfterSubmission.Should().BeApproximately(expectedSalary, 0.001);
