@@ -96,32 +96,47 @@ public class PersonPageTests
         }
         Assert.That(verificationErrors.ToString(), Is.EqualTo(""));
     }
-
+    [TestCase(-5, 4750)]
     [TestCase(5, 5250)]
     [TestCase(10, 5500)]
     [TestCase(20, 6000)]
-    [TestCase(-10, 4500)]
     public void Person_SalaryIncrease_ShouldIncrease(double percentage, double expectedSalary)
     {
-        // Arrange
         driver.Navigate().GoToUrl(BaseURL);
         driver.FindElement(By.XPath("//*[@data-test='PersonPageNavigation']")).Click();
 
         var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
 
-        var input = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreasePercentageInput']")));
-        input.Clear();
-        input.SendKeys(percentage.ToString());
+        var input = wait.Until(ExpectedConditions.ElementIsVisible(
+            By.XPath("//*[@data-test='SalaryIncreasePercentageInput']")));
 
-        // Act
-        var submitButton = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']")));
+        input.Clear();
+        input.SendKeys(
+            percentage.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        var submitButton = wait.Until(ExpectedConditions.ElementToBeClickable(
+            By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']")));
+
         submitButton.Click();
 
-        // Assert
-        var salaryLabel = wait.Until(ExpectedConditions.ElementExists(By.XPath("//*[@data-test='DisplayedSalary']")));
-        var salaryAfterSubmission = double.Parse(salaryLabel.Text);
+        wait.Until(d =>
+        {
+            var text = d.FindElement(
+                By.XPath("//*[@data-test='DisplayedSalary']")).Text;
+
+            return !string.IsNullOrWhiteSpace(text);
+        });
+
+        var salaryLabel = driver.FindElement(
+            By.XPath("//*[@data-test='DisplayedSalary']"));
+
+        var salaryAfterSubmission = double.Parse(
+            salaryLabel.Text,
+            System.Globalization.CultureInfo.InvariantCulture);
+
         salaryAfterSubmission.Should().BeApproximately(expectedSalary, 0.001);
     }
+
     private bool IsElementPresent(By by)
     {
         try
